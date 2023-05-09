@@ -19,7 +19,6 @@ library(ggtext)
 library(ggrepel)
 library(patchwork)
 uv_igeg<- read_csv(here("data", "sleep_data", "UV-SIS igeg-1.csv")) #create objects for reading in my data
-uv_sis <- read_csv(here("data", "sleep_data","UV-SIS.csv"))
 igeg_OE <- read_csv(here("data", "sleep_data" , "igeg(OE) outcrossed.csv"))
 
 uv_igeg_means <- uv_igeg %>% #create an object for data wrangling of uv data

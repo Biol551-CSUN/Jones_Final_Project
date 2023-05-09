@@ -1,0 +1,15 @@
+variable,description
+Time (min) after hs,number of minutes after worms (C. elegans) were heat shocked
+csnEx1 o/c,fraction of worms quiescent out of about 25 for the csnEx1 outcrossed strain
+wt sibs of Ex1,fraction of worms quiescent out of about 25 for wildtype siblings of the csnEx1 outcrossed strain
+csnEx2 o/c,fraction of worms quiescent out of about 25 for csnEx2 outcrossed strain
+wt sibs of csnEx2,fraction of worms quiescent out of about 25 for wildtype siblings of the csnEx2 outcrossed strain
+csnEx1;adm-4(sy1161),fraction of worms quiescent out of about 25 for strain with csnEx1 transgene and the adm-4(sy1161) early stop codon allele
+adm-4(sy1161) non-transgenic siblings,fraction of worms quiescent out of about 25 for strain with adm-4(sy1161) and no transgene
+csnEx1; let-23(sy10),fraction of worms quiescent out of about 25 for strain with csnEx1 transgene and the let-23(sy10) reduction of function allele
+csnEx1; ceh-17(np1),fraction of worms quiescent out of about 25 for strain with csnEx1 transgene and the ceh-17(np1) loss of function allele
+Wild type N2,fraction of worms quiescent out of about 25 for the wildtype C. elegans strain
+igeg-1(csn20),fraction of worms quiescent out of about 25 for the strain with the csn20 (igeg-1) allele (single cysteine to tyrosine point mutation)
+igeg-1(ve532),fraction of worms quiescent out of about 25 for the strain with the igeg-1 (ve532) crispr deletion allele
+Cell type,The type of cell or specific cell for which the RNA-seq data for igeg-1 was collected
+Expression level,The level of expression of igeg-1
