@@ -1,0 +1,267 @@
+---
+title: "Final Independent Project - *igeg-1* Data"
+author: "Jesse G Jones"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+## Data for *igeg-1(lf)* Mutants
+
+```{r, echo=TRUE, warning=FALSE}
+###Loading the libraries
+library(here)
+library(tidyverse)
+library(extrafont)
+library(ggtext)
+library(ggrepel)
+library(patchwork)
+uv_igeg<- read_csv(here("data", "sleep_data", "UV-SIS igeg-1.csv")) #create objects for reading in my data
+uv_sis <- read_csv(here("data", "sleep_data","UV-SIS.csv"))
+igeg_OE <- read_csv(here("data", "sleep_data" , "igeg(OE) outcrossed.csv"))
+
+uv_igeg_means <- uv_igeg %>% #create an object for data wrangling of uv data
+  mutate(n2=rowMeans(uv_igeg[,2:6]), #create new columns and calculate the means of each row from columns 2-6
+         csn20=rowMeans(uv_igeg[,7:11]), #and 7-11
+         ve532=rowMeans(uv_igeg[,12:16])) %>% #and 12-16
+          rename("time"="Time (min) after UV exposure", "WT"="n2") %>% #rename this column to "Time" and "n2" to "WT"
+  select(WT, ve532, csn20, time) %>% #select data from only these columns
+  pivot_longer(cols=c(WT, csn20, ve532), names_to="strain", values_to = "fq_mean") #pivot these columns to make long data
+
+n2_sd <- uv_igeg %>%
+  select("Wild type N2...2", "Wild type N2...3","Wild type N2...4",
+                      "Wild type N2...5","Wild type N2...6") %>% #select data from these columns
+  apply(1, sd) #calculate the standard deviation across each row of my selected columns
+
+uv_n2_sds <-  uv_igeg %>% 
+  rename("time"="Time (min) after UV exposure") %>% #rename my time column
+  select(time) %>% #select only the time column
+  mutate(sd=n2_sd) %>% #include my standard deviation data
+  mutate(strain=c("WT", "WT", "WT", "WT")) #create a strain column with "WT" in the rows associated with time and sd
+
+csn20_sd <- uv_igeg %>% 
+  select("igeg-1(csn20)...7", "igeg-1(csn20)...8", "igeg-1(csn20)...9", #select only csn20 mutant data columns
+         "igeg-1(csn20)...10", "igeg-1(csn20)...11") %>% 
+  apply(1, sd) #calculate the standard deviation across each row for the selected columns
+
+
+uv_csn20_sds <- uv_igeg %>% 
+  rename("time"="Time (min) after UV exposure") %>% #rename time column
+  select(time) %>% #select only the time column
+  mutate(sd=csn20_sd) %>% #add the sd data for csn20
+  mutate(strain=c("csn20", "csn20", "csn20", "csn20")) #create a strain column with the strain name
+
+ve532_sd <- uv_igeg %>%
+  select("igeg-1(ve532)...12", "igeg-1(ve532)...13", "igeg-1(ve532)...14", #select only ve532 data columns
+         "igeg-1(ve532)...15", "igeg-1(ve532)...16") %>% 
+  apply(1, sd) #calculate the standard deviation across each row for these columns
+
+uv_ve532_sds <- uv_igeg %>% 
+  rename("time"="Time (min) after UV exposure") %>% #rename my time column
+  select(time) %>% #select the time column only
+  mutate(sd=ve532_sd) %>% #add the standard deviation data to the dataframe
+  mutate(strain=c("ve532", "ve532", "ve532", "ve532")) #create a strain column for ve532
+
+
+list_sd <- list(uv_csn20_sds, uv_ve532_sds, uv_n2_sds) #create a list of my standard deviation data frames
+
+uv_sd <- list_sd %>% 
+  reduce(full_join) #full join each of these dataframes
+
+uv_igeg_mean_sd <- full_join(uv_sd, uv_igeg_means) #create a dataframe with the mean and standard deviation data for my SIS assay
+```
+
+## Plotting *igeg-1(lf)* Phenotypes
+
+```{r, echo=TRUE, warning=FALSE}
+
+ggplot(data=uv_igeg_mean_sd, aes(x=time, y=fq_mean, color=strain, shape=strain))+ #create a plot with the uv_igeg_mean_sd dataframe and time on my x axis, mean of fraction quiescent on y axis, and color and shape representing strain 
+         geom_point(size=3, alpha=0.75)+ #create a scatterplot with piont size 3 and .75 alpha 
+         geom_line(size=1.2, alpha=0.9)+ #create a line plot with line size 1.2 and alpha 0.9
+  theme_classic()+ #use this plot theme
+  theme(text=element_text(family="Trebuchet MS", size=12), #specify the font and size of my text
+        plot.title=ggtext::element_markdown(hjust=0.5),  #center my plot and make the text function like a markdown document
+        legend.text=element_markdown(size=13), #set my legend size to 13
+        axis.title.y=element_markdown(size=13), axis.title.x=element_text(size=13))+ #and my axis titles to 13
+  labs(x="Time (min) After UV Exposure", y="Fraction Quiescent", #modify my axis titles
+       title="***igeg-1* Mutants Are SIS-defective**", #create plot title
+       color="Strain", shape="Strain")+ #modify legend title
+  scale_x_continuous(breaks=c(25,50,75))+ #specify at what values there will be tick marks on my x axis
+  geom_errorbar(aes(ymin=fq_mean-(sd/sqrt(4)), #include the standard error of the mean for error bars
+                    ymax=fq_mean+(sd/2)), width=1.5, alpha=0.75) + #specify the opacity and width of my error bars
+  ylim(0, 1.0)+ #make my y limits 0-1.0
+  scale_color_manual(values=c("coral", "slateblue1","grey15"),labels=c("*igeg-1(csn20)*", #manually include my colors
+                                                                       "igeg-1(ve532)", "WT")) +
+  scale_shape_manual(labels=c("*igeg-1(csn20)*", "igeg-1(ve532)", "WT"), values=c(16, 15, 17)) #and my shapes
+ggsave(here("output", "SIS Plot.png"), width=9, height=4.5) #save to this file path, name, and dimmensions
+  
+```
+## Data for IGEG-1(OE) Phenotypes
+```{r, echo=TRUE, warning=FALSE}
+igeg_OE <- read_csv(here("data","sleep_data", "igeg(OE) outcrossed.csv")) %>% #read in my igeg-1 overexpression data
+  rename("time"="Time (min) after hs") %>% #rename my time column
+  subset(time<121) #select only time points that are smaller than 121 (aka 120 and below)
+OE_means <- igeg_OE %>% #create a new dataframe for data wrangling
+  mutate("IGEG-1(OE)"=rowMeans(igeg_OE[,2:5]), #create new columns and calculate my means across each row for columns 2-5
+         WT=rowMeans(igeg_OE[,6:8]), #and 6-8
+         "IGEG-1;let-23(rf)"=rowMeans(igeg_OE[,30:31]), #and 30-31
+         "IGEG-1;ceh-17(lf)"=rowMeans(igeg_OE[,34:35]), na.rm=TRUE) %>% #and 34-35
+  select("IGEG-1(OE)", "WT", "IGEG-1;let-23(rf)", #select only these columns
+         "IGEG-1;ceh-17(lf)", "time") %>% 
+  pivot_longer(cols=c("IGEG-1(OE)", "WT", "IGEG-1;let-23(rf)", #pivot my data to long format 
+                      "IGEG-1;ceh-17(lf)"),
+               names_to="strain", values_to="fq_mean")
+OE_means #view my new dataframe
+
+sibs_sd <- igeg_OE %>% #create a standard deviation dataframe for my siblings (WT) data
+  select("wt sibs of Ex1...6", "wt sibs of Ex1...7", "wt sibs of Ex1...8") %>% #select my sibs data columns
+  apply(1, sd) #calculate the standard deviation of the fraction quiescent across these columns
+
+
+sibs_se <- igeg_OE %>% 
+  select(time) %>% #select time only
+  mutate(se=(sibs_sd/sqrt(3))) %>%  #include the standard deviation data and use it to calculate standard error of the mean
+  mutate(strain=c("WT", "WT", "WT", "WT", "WT", "WT", "WT", "WT")) #create a strain column for my sibs (wildtype) 
+
+Ex1_sd <- igeg_OE %>% 
+  select("csnEx1 o/c...2", "csnEx1 o/c...3", "csnEx1 o/c...4", #select only csnEx1 data columns 
+         "csnEx1 o/c...5") %>% 
+  apply(1, sd) #calculate the standard deviation across each row for these columns
+
+
+Ex1_se <- igeg_OE %>% 
+  select(time) %>% #select only the time column 
+  mutate(se=(Ex1_sd/sqrt(4))) %>%  #add the standard deviation data and calculate the standard error of the mean
+  mutate(strain=c("IGEG-1(OE)", "IGEG-1(OE)", "IGEG-1(OE)", "IGEG-1(OE)",
+                  "IGEG-1(OE)", "IGEG-1(OE)", "IGEG-1(OE)", "IGEG-1(OE)")) #add a strain column for IGEG-1 overexpression data
+
+let23_sd <- igeg_OE %>% 
+  select("csnEx1; let-23(sy10)...30", "csnEx1; let-23(sy10)...31") %>% #select data from only these columns
+  apply(1, sd) #calculate the standard deviation across the rows of these columns
+
+let23_se <- igeg_OE %>% 
+  select(time) %>% #select only time column
+  mutate(se=(let23_sd/sqrt(2))) %>% #add the standard deviation data to calculate the standard error of the mean for each time point
+  mutate(strain=c("IGEG-1;let-23(rf)", "IGEG-1;let-23(rf)", 
+                  "IGEG-1;let-23(rf)", "IGEG-1;let-23(rf)", 
+                  "IGEG-1;let-23(rf)", "IGEG-1;let-23(rf)", 
+                  "IGEG-1;let-23(rf)", "IGEG-1;let-23(rf)")) #add a strain column for IGEG-1;let-23(rf)
+
+ceh17_sd <- igeg_OE %>%
+  select("csnEx1; ceh-17(np1)...34", "csnEx1; ceh-17(np1)...35") %>% #select data only in these columns
+  apply(1, sd) #calculate the standard deviation of each row across these columns (for each time point)
+
+ceh17_se <- igeg_OE %>% 
+  select(time) %>%  #select only the time column
+  mutate(se=(ceh17_sd/sqrt(2))) %>% #add standard deviation data to calculate the standard error of the mean
+  mutate(strain=c("IGEG-1;ceh-17(lf)", "IGEG-1;ceh-17(lf)", 
+                  "IGEG-1;ceh-17(lf)", "IGEG-1;ceh-17(lf)", 
+                  "IGEG-1;ceh-17(lf)", "IGEG-1;ceh-17(lf)", 
+                  "IGEG-1;ceh-17(lf)", "IGEG-1;ceh-17(lf)")) #add a strain column for this strain
+
+list_se <- list(sibs_se, ceh17_se, let23_se, Ex1_se) %>% #create a list of my standard error dataframes
+  reduce(full_join) #join the standard error data for each strain of interest into one dataframe
+
+OE_se_mean <- full_join(list_se, OE_means) #join the overexpression standard error and mean data together
+
+OE_wt_se_mean <- OE_se_mean %>%
+  subset(strain %in% c("WT", "IGEG-1(OE)")) #create a dataframe that subsets for only these two strains to create a simplified plot first
+
+```
+## Plotting IGEG-1(OE) Phenotypes
+
+```{r, echo=TRUE, warning=FALSE}
+OE_plot1 <- ggplot(data=OE_wt_se_mean, aes(x=time, y=fq_mean, color=strain, shape=strain))+ #create a plot with time on the x axis, mean of fraction quiescent on the y axis, and strain represented by shape and color
+         geom_point(size=3.5, alpha=0.75)+ #create a scatter plot with points of size 3.5, alpha .75
+         geom_line(size=1.2, alpha=0.9)+ #add a line of size 1.2 and alpha .9
+  theme_classic()+ #use the classic theme
+  theme(plot.title=element_markdown(hjust=0.5), #center my plot title above the plot and allow markdown text input
+        text=element_text(family="Trebuchet MS", size=12), #specify which font style and size I want
+        axis.title.y=element_markdown(size=13), #set my font size to 13 for x axis title
+        axis.title.x=element_text(size=13), #and y axis title
+        legend.text=element_markdown(size=13))+ #and legend title
+  labs(x="Time (min) After Mild Heat Shock", y="Fraction Quiescent", #modify my x and y axis titles
+       title="**Overexpression of IGEG-1 Promotes Sleep**", #add a plot title
+      color="Strain", shape="Strain")+ #modify my legend title
+  scale_shape_manual(values=c(16, 15, 18, 17), labels=c("IGEG-1(OE)", "WT"))+ #manually set the shapes and shape legend
+  geom_errorbar(aes(ymin=fq_mean-se, #include the standard error of the mean for error bars
+                    ymax=fq_mean+se), width=1.5, alpha=0.75)+ #set the width and alpha for my error bars
+  scale_color_manual(labels=c("IGEG-1(OE)", "WT"), #manually set the color legend text
+                     values=c("olivedrab3", "grey15"))+ #and colors for each strain
+  scale_x_continuous(breaks=c(10, 20, 30, 45, 60, 75, 90, 105, 120)) #manually set the x axis tick marks
+```
+
+```{r}
+#The following code for this plot is nearly identical to the code for the above plot code (OE_plo1)
+OE_plot2 <- ggplot(data=OE_se_mean, aes(x=time, y=fq_mean, color=strain, shape=strain))+
+         geom_point(size=3.5, alpha=0.75)+
+         geom_line(size=1.2, alpha=0.9)+
+  theme_classic()+
+   scale_x_continuous(breaks=c(10, 20, 30, 45, 60, 75, 90, 105, 120))+
+  theme(plot.title=element_markdown(hjust=0.5), 
+        text=element_text(family="Trebuchet MS", size=12), 
+        axis.title.y=element_markdown(size=13), 
+        axis.title.x=element_text(size=13),
+        legend.text=element_markdown(size=13))+
+  labs(x="Time (min) After Mild Heat Shock", y="Fraction Quiescent",
+       title="**IGEG-1(OE) Sleep Requires ALA and LET-23-dependent**",
+      color="Strain", shape="Strain")+
+  scale_shape_manual(values=c(16, 15, 18, 17), labels=c("IGEG-1(OE)", 
+                                                        "IGEG-1;*ceh-17*(lf)", 
+                                                        "IGEG-1;*let-23*(rf)", 
+                                                        "WT"))+ #manually specify which strain is represented by which shape
+  geom_errorbar(aes(ymin=fq_mean-se, #include the standard error of the mean for error bars
+                    ymax=fq_mean+se), width=1.5, alpha=0.75)+
+  scale_color_manual(labels=c("IGEG-1(OE)", "IGEG-1;*ceh-17*(lf)", 
+                              "IGEG-1;*let-23*(rf)", "WT"),
+                     values=c("olivedrab3", "orchid2", 
+                                          "dodgerblue", "grey15")) #manually specify which strain is represented by which color
+
+OE_plot1/OE_plot2 #use patchwork to patch these plots together
+ggsave(here("output","Overexpression patchwork.png"), height=7, width=9) #save the plots to this pathway, file name, and these dimmensions
+
+OE_plot1
+ggsave(here("output","Overexpression plot1.png"), height=4.5, width=9) #save OE_plot1 independently
+
+OE_plot2
+ggsave(here("output","Overexpresion plot2.png"), height=4.5, width=9) #save OE_plot2 independently
+```
+## *igeg-1* Single-cell RNAseq Data
+
+```{r, echo=TRUE, warning=FALSE}
+cengen_data <- read_csv(here("data","cengen_data","cengen1.csv")) #read in the cengen data csv
+cengen <- cengen_data %>% #create a dataframe for cengen data wrangling
+  rename(cell_number="...1", expression_level="Expression level", #rename these columns to my desired column names
+         cell_type="Cell type") %>% 
+  subset(cell_number<11) #subste the cell number to numbers 1-10
+
+cell_type <- cengen %>%
+  select(cell_type) %>% #select only the cell types data 
+  pivot_wider(names_from=cell_type, values_from=cell_type) #pivot my cell types wider
+cells <- list(colnames(cell_type)) #create a list of all of my cell types
+```
+
+## Plotting Single-cell RNAseq Data
+```{r, echo=TRUE, warning=FALSE}
+
+ggplot(data=cengen) + #create a plot of my cengen data
+  geom_col(aes(x=fct_reorder(cell_type, expression_level, .desc=TRUE), #create a column plot and reorder my x axis so that the data goes in descending order from greatest to least expression by cell type
+               y=expression_level, fill=expression_level))+ #set my y axis and fill color aesthetics to expression level
+  geom_label_repel(aes(x=cell_type, y=expression_level,
+                       label= c("URB", "PVT", "DVC", "M5", 
+                                "I5", "Anal_muscle", "Rectal_gland",
+                                "I4", "M2", "RME_DV")))+ #add the labels for each column and repel them so that they do not overlap
+  theme_classic()+ #use the classic plot theme
+  theme(text=element_text(family="Trebuchet MS", size=12), #set the plot font to Trebuchet MS, size 13
+        axis.text.x=element_blank(), axis.title.y=element_markdown(size=13), #remove x axis text, set y axis title font size to 13
+        axis.title.x=element_text(size=13), #set x axis title to size 13
+        plot.title=element_markdown(hjust=0.5))+ #center my plot title above my plot and enable markdown text code
+  scale_fill_gradient(low="darkviolet", high="coral1")+ #manually set the fill color gradient
+  labs(y="Expression Level of *igeg-1*", fill="Expression Level", #modify/create my y axis, fill legend, x axis, and plot titles
+       title="**Top 10 Cells and Cell Types That Express *igeg-1***",
+       x="Cell Name or Type")
+ggsave(here("output", "Expression Data.png"), width=10, height=7) #save to this pathway and file name with these dimmensions
+```
+
