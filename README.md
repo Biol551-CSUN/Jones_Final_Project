@@ -2,7 +2,10 @@
 
 This project folder is dedicated to the final independent project for BIOL 551. Here, I plot the phenotypic data associated with various mutations in or the overexpression of the gene *igeg-1* in *C. elegans*. The IGEG-1 overexpression phenotype was then assessed in various genetic backgrounds to perform epistasis experiments.
 
+[Link to githack html page](https://rawcdn.githack.com/Biol551-CSUN/Jones_Final_Project/ac891b6ac3db22bbd94121da5876a957299266a7/scripts/final_script.html)
+
 [Link to class presentation](https://docs.google.com/presentation/d/1xPHkU-d-kPDLCTOaZk4IL7WLDO-pUPoo2FBLeIpWkcs/edit?usp=sharing)
+
 
 # Works Cited
 
