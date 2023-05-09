@@ -1,6 +1,6 @@
 # Project Description
 
-This project folder is dedicated to the final independent project for BIOL 551. Here, I plot the phenotypic data associated with various mutations in or the overexpression of the gene *igeg-1* in *C. elegans*.
+This project folder is dedicated to the final independent project for BIOL 551. Here, I plot the phenotypic data associated with various mutations in or the overexpression of the gene *igeg-1* in *C. elegans*. The IGEG-1 overexpression phenotype was then assessed in various genetic backgrounds to perform epistasis experiments.
 
 [Link to class presentation](https://docs.google.com/presentation/d/1xPHkU-d-kPDLCTOaZk4IL7WLDO-pUPoo2FBLeIpWkcs/edit?usp=sharing)
 
